@@ -1,10 +1,10 @@
-# ci-cd-pipeline-k8s-eks-Jenkins
+# 🚀 End-to-End CI/CD Pipeline with Jenkins + AWS EKS + Monitoring
 
-# 🚀 End-to-End CI/CD Pipeline with Jenkins + AWS EKS
+---
 
-## 📌 Project Overview
+# 📌 Project Overview
 
-This project demonstrates a complete production-style DevOps workflow using:
+This project demonstrates a complete production-style DevOps CI/CD workflow using:
 
 * Jenkins
 * Docker
@@ -17,12 +17,12 @@ This project demonstrates a complete production-style DevOps workflow using:
 
 The pipeline automates:
 
-1. Source Code Checkout
-2. Docker Image Build
-3. Docker Image Push to ECR
-4. Kubernetes Deployment to AWS EKS
-5. Monitoring Setup
-6. Auto Scaling
+✅ Docker Image Build
+✅ Amazon ECR Push
+✅ Kubernetes Deployment
+✅ AWS EKS Release
+✅ Monitoring Setup
+✅ Auto Scaling
 
 ---
 
@@ -52,15 +52,15 @@ HPA Auto Scaling
 
 # 📋 Prerequisites
 
-Install the following tools:
+Install the following locally:
 
-| Tool             | Purpose            |
-| ---------------- | ------------------ |
-| AWS CLI          | AWS Authentication |
-| kubectl          | Kubernetes CLI     |
-| eksctl           | Create EKS Cluster |
-| Docker Desktop   | Docker Runtime     |
-| Jenkins (Docker) | CI/CD Automation   |
+| Tool           | Purpose            |
+| -------------- | ------------------ |
+| AWS CLI        | AWS Authentication |
+| kubectl        | Kubernetes CLI     |
+| eksctl         | Create EKS Cluster |
+| Docker Desktop | Docker Runtime     |
+| Jenkins        | CI/CD Automation   |
 
 ---
 
@@ -75,7 +75,7 @@ Provide:
 * AWS Access Key
 * AWS Secret Access Key
 * Region → `us-east-1`
-* Output Format → `json`
+* Output → `json`
 
 Verify:
 
@@ -103,7 +103,7 @@ Verify:
 kubectl get nodes
 ```
 
-Expected Output:
+Expected:
 
 ```text
 STATUS = Ready
@@ -135,9 +135,9 @@ Login Succeeded
 
 ---
 
-# 🖥️ Step 5 — Jenkins Setup (Docker Desktop)
+# 🖥️ Step 5 — Jenkins Access
 
-Jenkins is running locally using Docker Desktop.
+Jenkins is already running locally using Docker Desktop.
 
 Access Jenkins:
 
@@ -147,37 +147,7 @@ http://localhost:8080
 
 ---
 
-# 🚀 Step 6 — Run Jenkins Container
-
-Run Jenkins with Docker socket access:
-
-```bash
-docker run -d \
---name jenkins \
--p 8080:8080 \
--p 50000:50000 \
--v jenkins_home:/var/jenkins_home \
--v /var/run/docker.sock:/var/run/docker.sock \
-jenkins/jenkins:lts
-```
-
----
-
-# 🔓 Step 7 — Unlock Jenkins
-
-Get initial Jenkins password:
-
-```bash
-docker exec -it jenkins cat /var/jenkins_home/secrets/initialAdminPassword
-```
-
-Install suggested plugins.
-
-Create admin user.
-
----
-
-# 🔌 Step 8 — Install Jenkins Plugins
+# 🔌 Step 6 — Install Jenkins Plugins
 
 Go to:
 
@@ -192,74 +162,189 @@ Install:
 * Git
 * Pipeline
 * Credentials Binding
+* AWS Credentials
 * Blue Ocean
 
-Restart Jenkins container if needed.
+Restart Jenkins if required.
 
 ---
 
-# 🔑 Step 9 — Configure Jenkins Credentials
+# 🔑 Step 7 — Configure AWS Credentials in Jenkins
 
 Go to:
 
 ```text
-Manage Jenkins → Credentials
+Manage Jenkins → Credentials → System → Global Credentials
 ```
 
-Add AWS Credentials:
+Click:
 
-| Field      | Value               |
-| ---------- | ------------------- |
-| Kind       | AWS Credentials     |
-| ID         | aws-creds           |
-| Access Key | Your AWS Access Key |
-| Secret Key | Your AWS Secret Key |
+```text
+Add Credentials
+```
+
+Choose:
+
+```text
+AWS Credentials
+```
+
+Fill:
+
+| Field       | Value                         |
+| ----------- | ----------------------------- |
+| Scope       | Global                        |
+| ID          | eks-aws-creds                 |
+| Description | AWS credentials for EKS CI/CD |
+
+Provide:
+
+* AWS Access Key ID
+* AWS Secret Access Key
+
+Click:
+
+```text
+Create
+```
 
 ---
 
-# 🐳 Step 10 — Enable Docker Access
+# 🐳 Step 8 — Verify Docker Access Inside Jenkins
 
-In Docker Desktop:
-
-```text
-Settings → General
-```
-
-Enable:
-
-```text
-Expose daemon on tcp://localhost:2375 without TLS
-```
-
-Restart Docker Desktop.
-
----
-
-# ☸️ Step 11 — Configure kubectl Access Inside Jenkins
-
-Copy kubeconfig into Jenkins container:
-
-```bash
-docker cp ~/.kube jenkins:/var/jenkins_home/.kube
-```
-
-Access Jenkins container:
+Enter Jenkins container:
 
 ```bash
 docker exec -it jenkins bash
 ```
 
-Verify Kubernetes access:
+Verify Docker:
+
+```bash
+docker ps
+```
+
+---
+
+# ☸️ Step 9 — Install kubectl Inside Jenkins Container
+
+Enter Jenkins container:
+
+```bash
+docker exec -it jenkins bash
+```
+
+Download kubectl:
+
+```bash
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+```
+
+Make executable:
+
+```bash
+chmod +x kubectl
+```
+
+Move to system path:
+
+```bash
+mv kubectl /usr/local/bin/
+```
+
+Verify:
+
+```bash
+kubectl version --client
+```
+
+---
+
+# ☁️ Step 10 — Install AWS CLI Inside Jenkins Container
+
+Inside Jenkins container:
+
+```bash
+apt update
+apt install -y curl unzip
+```
+
+Download AWS CLI:
+
+```bash
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+```
+
+Unzip:
+
+```bash
+unzip awscliv2.zip
+```
+
+Install:
+
+```bash
+./aws/install
+```
+
+Verify:
+
+```bash
+aws --version
+```
+
+---
+
+# 🔐 Step 11 — Configure AWS CLI Inside Jenkins
+
+Inside Jenkins container:
+
+```bash
+aws configure
+```
+
+Provide:
+
+| Field          | Value           |
+| -------------- | --------------- |
+| AWS Access Key | Your AWS Key    |
+| AWS Secret Key | Your AWS Secret |
+| Region         | us-east-1       |
+| Output         | json            |
+
+Verify:
+
+```bash
+aws sts get-caller-identity
+```
+
+---
+
+# ☸️ Step 12 — Configure EKS Access Inside Jenkins
+
+Generate kubeconfig:
+
+```bash
+aws eks update-kubeconfig \
+--region us-east-1 \
+--name devops-cluster
+```
+
+Verify:
 
 ```bash
 kubectl get nodes
 ```
 
-You should see EKS nodes in `Ready` state.
+Expected:
+
+```text
+STATUS = Ready
+```
 
 ---
 
-# 📂 Step 12 — Project Structure
+# 📂 Step 13 — Project Structure
 
 ```text
 project/
@@ -277,13 +362,7 @@ project/
 
 ---
 
-# 🐳 Step 13 — Dockerfile
-
-Create:
-
-```text
-Dockerfile
-```
+# 🐳 Step 14 — Dockerfile
 
 ```dockerfile
 FROM python:3.10-slim
@@ -303,7 +382,7 @@ CMD ["python", "app.py"]
 
 ---
 
-# ☸️ Step 14 — Kubernetes Deployment File
+# ☸️ Step 15 — Kubernetes Deployment File
 
 Create:
 
@@ -370,199 +449,56 @@ spec:
 
 ---
 
-# 🚀 Step 15 — Create Jenkinsfile
+# ⚖️ Step 16 — Horizontal Pod Autoscaler
 
 Create:
 
 ```text
-Jenkinsfile
+hpa.yaml
 ```
 
-```groovy
-pipeline {
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
 
-    agent any
+metadata:
+  name: devops-hpa
 
-    environment {
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: devops-app
 
-        AWS_ACCOUNT_ID = "336984083625"
-        AWS_REGION = "us-east-1"
+  minReplicas: 1
+  maxReplicas: 5
 
-        ECR_REPO = "devops-app"
+  metrics:
+  - type: Resource
 
-        IMAGE_TAG = "latest"
-    }
+    resource:
+      name: cpu
 
-    stages {
-
-        stage('Clone Repository') {
-
-            steps {
-
-                git 'https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git'
-            }
-        }
-
-        stage('Build Docker Image') {
-
-            steps {
-
-                sh '''
-                docker build -t $ECR_REPO:$IMAGE_TAG .
-                '''
-            }
-        }
-
-        stage('Login to ECR') {
-
-            steps {
-
-                withCredentials([
-                    [$class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: 'aws-creds']
-                ]) {
-
-                    sh '''
-                    aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-                    '''
-                }
-            }
-        }
-
-        stage('Tag Docker Image') {
-
-            steps {
-
-                sh '''
-                docker tag $ECR_REPO:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
-                '''
-            }
-        }
-
-        stage('Push Docker Image') {
-
-            steps {
-
-                sh '''
-                docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
-                '''
-            }
-        }
-
-        stage('Deploy to EKS') {
-
-            steps {
-
-                sh '''
-                kubectl apply -f k8s-deployment.yaml
-                '''
-            }
-        }
-    }
-
-    post {
-
-        success {
-            echo 'Deployment Successful!'
-        }
-
-        failure {
-            echo 'Deployment Failed!'
-        }
-    }
-}
+      target:
+        type: Utilization
+        averageUtilization: 50
 ```
 
----
-
-# 🚀 Step 16 — Create Jenkins Pipeline Job
-
-Go to:
-
-```text
-Jenkins Dashboard → New Item
-```
-
-Choose:
-
-* Pipeline
-
----
-
-# ⚙️ Step 17 — Configure Pipeline
-
-## Pipeline Source
-
-```text
-Pipeline script from SCM
-```
-
-SCM:
-
-* Git
-
-Repository URL:
-
-* Your GitHub Repository URL
-
-Branch:
-
-```text
-main
-```
-
-Script Path:
-
-```text
-Jenkinsfile
-```
-
-Save the job.
-
----
-
-# ▶️ Step 18 — Run Jenkins Pipeline
-
-Click:
-
-```text
-Build Now
-```
-
-Pipeline stages:
-
-* Clone Repository
-* Build Docker Image
-* Login to ECR
-* Push Image
-* Deploy to EKS
-
----
-
-# 🔍 Step 19 — Verify Deployment
+Apply:
 
 ```bash
-kubectl get pods
-kubectl get svc
+kubectl apply -f hpa.yaml
 ```
 
----
-
-# 🌍 Step 20 — Access Application
+Verify:
 
 ```bash
-kubectl get svc
-```
-
-Open:
-
-```text
-http://<EXTERNAL-IP>
+kubectl get hpa
 ```
 
 ---
 
-# 📊 Step 21 — Deploy Prometheus
+# 📊 Step 17 — Deploy Prometheus
 
 Create:
 
@@ -617,7 +553,7 @@ spec:
   type: LoadBalancer
 ```
 
-Apply:
+Deploy:
 
 ```bash
 kubectl apply -f prometheus-deployment.yaml
@@ -625,7 +561,7 @@ kubectl apply -f prometheus-deployment.yaml
 
 ---
 
-# 📈 Step 22 — Deploy Grafana
+# 📈 Step 18 — Deploy Grafana
 
 Create:
 
@@ -680,7 +616,7 @@ spec:
   type: LoadBalancer
 ```
 
-Apply:
+Deploy:
 
 ```bash
 kubectl apply -f grafana-deployment.yaml
@@ -688,7 +624,7 @@ kubectl apply -f grafana-deployment.yaml
 
 ---
 
-# 🔗 Step 23 — Configure Grafana
+# 🔗 Step 19 — Configure Grafana
 
 Default Credentials:
 
@@ -697,7 +633,7 @@ Username: admin
 Password: admin
 ```
 
-Prometheus URL:
+Add Prometheus datasource:
 
 ```text
 http://prometheus-service:9090
@@ -705,58 +641,185 @@ http://prometheus-service:9090
 
 ---
 
-# ⚖️ Step 24 — Configure HPA
+# 🚀 Step 20 — Jenkinsfile
 
-Create:
+```groovy
+pipeline {
 
-```text
-hpa.yaml
-```
+    agent any
 
-```yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
+    environment {
 
-metadata:
-  name: devops-hpa
+        AWS_ACCOUNT_ID = "336984083625"
+        AWS_REGION = "us-east-1"
 
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: devops-app
+        ECR_REPO = "devops-app"
 
-  minReplicas: 1
-  maxReplicas: 5
+        IMAGE_TAG = "latest"
+    }
 
-  metrics:
-  - type: Resource
+    stages {
 
-    resource:
-      name: cpu
+        stage('Clone Repository') {
 
-      target:
-        type: Utilization
-        averageUtilization: 50
-```
+            steps {
 
-Apply:
+                git 'https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git'
+            }
+        }
 
-```bash
-kubectl apply -f hpa.yaml
+        stage('Build Docker Image') {
+
+            steps {
+
+                sh '''
+                docker build -t $ECR_REPO:$IMAGE_TAG .
+                '''
+            }
+        }
+
+        stage('Login to ECR') {
+
+            steps {
+
+                withCredentials([
+                    [$class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'eks-aws-creds']
+                ]) {
+
+                    sh '''
+                    aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                    '''
+                }
+            }
+        }
+
+        stage('Tag Docker Image') {
+
+            steps {
+
+                sh '''
+                docker tag $ECR_REPO:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
+                '''
+            }
+        }
+
+        stage('Push Docker Image') {
+
+            steps {
+
+                sh '''
+                docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
+                '''
+            }
+        }
+
+        stage('Configure EKS Access') {
+
+            steps {
+
+                sh '''
+                aws eks update-kubeconfig --region us-east-1 --name devops-cluster
+                '''
+            }
+        }
+
+        stage('Deploy to EKS') {
+
+            steps {
+
+                sh '''
+                kubectl apply -f k8s-deployment.yaml
+                kubectl apply -f hpa.yaml
+                '''
+            }
+        }
+    }
+
+    post {
+
+        success {
+            echo 'Deployment Successful!'
+        }
+
+        failure {
+            echo 'Deployment Failed!'
+        }
+    }
+}
 ```
 
 ---
 
-# 📈 Step 25 — Verify HPA
+# ▶️ Step 21 — Create Jenkins Pipeline
+
+Go to:
+
+```text
+Jenkins Dashboard → New Item
+```
+
+Choose:
+
+```text
+Pipeline
+```
+
+---
+
+# ⚙️ Step 22 — Configure Pipeline
+
+Select:
+
+```text
+Pipeline script from SCM
+```
+
+SCM:
+
+```text
+Git
+```
+
+Provide:
+
+* Repository URL
+* Branch → `main`
+* Script Path → `Jenkinsfile`
+
+Save Pipeline.
+
+---
+
+# ▶️ Step 23 — Run Pipeline
+
+Click:
+
+```text
+Build Now
+```
+
+Pipeline executes:
+
+✅ Git Clone
+✅ Docker Build
+✅ ECR Push
+✅ EKS Deployment
+✅ HPA Deployment
+
+---
+
+# 📈 Step 24 — Verify Deployment
 
 ```bash
+kubectl get pods
+kubectl get svc
 kubectl get hpa
 ```
 
 ---
 
-# 📊 Step 26 — Install Metrics Server
+# 📊 Step 25 — Install Metrics Server
 
 ```bash
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
@@ -771,7 +834,9 @@ kubectl top pods
 
 ---
 
-# 🔥 Step 27 — Generate Load for HPA Testing
+# 🔥 Step 26 — Test Auto Scaling
+
+Create load generator:
 
 ```bash
 kubectl run -i --tty load-generator --image=busybox -- sh
@@ -792,60 +857,14 @@ kubectl get pods -w
 
 ---
 
-# 🛠️ Useful Commands
-
-## Get Pods
-
-```bash
-kubectl get pods
-```
-
-## Get Services
-
-```bash
-kubectl get svc
-```
-
-## View Logs
-
-```bash
-kubectl logs deployment/devops-app
-```
-
-## Restart Deployment
-
-```bash
-kubectl rollout restart deployment devops-app
-```
-
----
-
 # 🚨 Troubleshooting
 
-## Update kubeconfig
+Refresh kubeconfig:
 
 ```bash
 aws eks update-kubeconfig \
 --region us-east-1 \
 --name devops-cluster
-```
-
----
-
-## Verify Context
-
-```bash
-kubectl config get-contexts
-```
-
----
-
-## Verify ECR Images
-
-```bash
-aws ecr describe-images \
---repository-name devops-app \
---region us-east-1
 ```
 
 ---
@@ -862,20 +881,7 @@ eksctl delete cluster \
 
 ---
 
-# 🚀 Future Improvements
-
-* Terraform Automation
-* Helm Charts
-* ArgoCD GitOps
-* SonarQube Integration
-* Trivy Security Scanning
-* Slack Notifications
-* Blue-Green Deployment
-* Canary Deployment
-
----
-
-# 🎯 Resume-Worthy Skills Demonstrated
+# 🎯 Skills Demonstrated
 
 ✅ Jenkins
 ✅ Docker
@@ -886,19 +892,35 @@ eksctl delete cluster \
 ✅ Prometheus
 ✅ Grafana
 ✅ HPA
-✅ Cloud Deployment
 ✅ Monitoring & Observability
 ✅ DevOps Automation
+✅ Cloud-Native Deployment
+
+---
+
+# 🚀 Future Improvements
+
+* Terraform Automation
+* Helm Charts
+* ArgoCD GitOps
+* SonarQube Integration
+* Trivy Security Scanning
+* Slack Notifications
+* Blue-Green Deployment
 
 ---
 
 # 🙌 Final Outcome
 
-Successfully implemented a production-style CI/CD pipeline using Jenkins and AWS EKS with:
+Successfully implemented a complete production-style CI/CD pipeline using:
 
-* Automated Docker builds
-* ECR image push
-* Kubernetes deployment
-* Monitoring stack
-* Auto scaling
-* Cloud-native deployment workflow
+* Jenkins
+* Docker
+* AWS EKS
+* Amazon ECR
+* Kubernetes
+* Prometheus
+* Grafana
+* HPA Auto Scaling
+
+with fully automated cloud-native deployment workflows.

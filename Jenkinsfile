@@ -9,8 +9,8 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-
-                git 'https://github.com/govindsainidevops/ci-cd-pipeline-k8s-eks-Jenkins.git'
+                git branch: 'main',
+                url: 'https://github.com/govindsainidevops/ci-cd-pipeline-k8s-eks-Jenkins.git'
             }
         }
         stage('Build Docker Image') {
